@@ -57,23 +57,42 @@ const KNOWN_CONTRACTS = new Set([
   '0x8eb8a3b98659cce290402893d0123abb75e3ab28', // Avalanche Bridge
 ]);
 
+// ─── Etherscan Request Helper with Retry ───────────────────────────────────────
+async function etherscanRequest(params) {
+  params.apikey = config.ethApiKey;
+  let attempts = 0;
+  while (attempts < 5) {
+    try {
+      const { data } = await axios.get(config.etherscanBase, { params, timeout: 10000 });
+      
+      if (data.status === '0' && data.message === 'NOTOK') {
+        if (data.result && data.result.includes('Max calls per sec')) {
+          attempts++;
+          await new Promise(r => setTimeout(r, 1500 * attempts)); // Exponential backoff: 1.5s, 3s, 4.5s
+          continue;
+        }
+        throw new Error(`Etherscan error: ${data.result}`);
+      }
+      return data;
+    } catch (err) {
+      if (attempts >= 4) throw err;
+      attempts++;
+      await new Promise(r => setTimeout(r, 1500 * attempts));
+    }
+  }
+  throw new Error('Etherscan rate limit exhausted after retries');
+}
+
 // ─── Etherscan: getLogs ──────────────────────────────────────────────────────
 async function fetchLogsEtherscan(contractAddress, fromBlock, toBlock) {
-  const params = {
+  const data = await etherscanRequest({
     chainid: 1,
     module: 'logs',
     action: 'getLogs',
     address: contractAddress,
     fromBlock,
-    toBlock,
-    apikey: config.ethApiKey,
-  };
-
-  const { data } = await axios.get(config.etherscanBase, { params, timeout: 10000 });
-
-  if (data.status === '0' && data.message === 'NOTOK') {
-    throw new Error(`Etherscan error: ${data.result}`);
-  }
+    toBlock
+  });
   return data.result || [];
 }
 
@@ -135,16 +154,12 @@ async function getLatestBlock() {
 async function getEthBalancesBatch(addresses) {
   if (addresses.length === 0) return [];
   try {
-    const { data } = await axios.get(config.etherscanBase, {
-      params: {
-        chainid: 1,
-        module: 'account',
-        action: 'balancemulti',
-        address: addresses.join(','),
-        tag: 'latest',
-        apikey: config.ethApiKey
-      },
-      timeout: 10000
+    const data = await etherscanRequest({
+      chainid: 1,
+      module: 'account',
+      action: 'balancemulti',
+      address: addresses.join(','),
+      tag: 'latest'
     });
 
     if (data.status !== '1') return addresses.map(() => 0);
