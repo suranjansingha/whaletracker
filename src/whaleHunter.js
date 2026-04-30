@@ -99,16 +99,6 @@ async function fetchLogsInfura(contractAddress, fromBlock, toBlock) {
 
 // ─── Get current block ───────────────────────────────────────────────────────
 async function getLatestBlock() {
-  if (config.infuraRpc) {
-    const { data } = await axios.post(config.infuraRpc, {
-      jsonrpc: '2.0', id: 1, method: 'eth_blockNumber', params: [],
-    }, { timeout: 8000 });
-    return parseInt(data.result, 16);
-  }
-
-  // Etherscan V2 proxy for block number
-// ─── Get current block ───────────────────────────────────────────────────────
-async function getLatestBlock() {
   // Try Etherscan first
   if (config.ethApiKey) {
     try {
