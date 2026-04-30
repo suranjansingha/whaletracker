@@ -143,21 +143,11 @@ async function getEthBalance(address) {
 // eth_getCode returns '0x' for EOAs, anything longer = contract
 async function isContract(address) {
   try {
-    if (config.infuraRpc) {
-      const { data } = await axios.post(config.infuraRpc, {
-        jsonrpc: '2.0', id: 1, method: 'eth_getCode',
-        params: [address, 'latest'],
-      }, { timeout: 6000 });
-      return data.result && data.result !== '0x';
-    }
-    // Etherscan V2 proxy
-    const { data } = await axios.get(config.etherscanBase, {
-      params: {
-        chainid: 1, module: 'proxy', action: 'eth_getCode',
-        address, tag: 'latest', apikey: config.ethApiKey,
-      },
-      timeout: 6000,
-    });
+    const rpc = config.infuraRpc || config.publicRpc;
+    const { data } = await axios.post(rpc, {
+      jsonrpc: '2.0', id: 1, method: 'eth_getCode',
+      params: [address, 'latest'],
+    }, { timeout: 8000 });
     return data.result && data.result !== '0x';
   } catch {
     return false; // assume EOA on error (safe default)
@@ -192,7 +182,7 @@ async function runWhaleHunter(fromBlock, toBlock, logger) {
     let source = 'Etherscan';
 
     // Sleep to prevent Etherscan free-tier rate limits (Max 5 calls/sec)
-    await new Promise(res => setTimeout(res, 250));
+    await new Promise(res => setTimeout(res, 500));
 
     try {
       if (!config.ethApiKey) throw new Error('No ETH_API_KEY — switching to Infura RPC');
