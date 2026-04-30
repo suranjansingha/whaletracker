@@ -25,6 +25,9 @@ const { resolveViaOpenSea } = require('./openSeaResolver');
 async function resolveViaNeynar(address) {
   if (!config.neynarApiKey) return null;
 
+  // Add a small delay to prevent Neynar free tier rate limiting (429)
+  await new Promise(r => setTimeout(r, 1000));
+
   const { data } = await axios.get(
     'https://api.neynar.com/v2/farcaster/user/bulk-by-address',
     {

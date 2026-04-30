@@ -217,7 +217,7 @@ async function runWhaleHunter(fromBlock, toBlock, logger) {
 
       const balance = await getEthBalance(wallet);
       if (balance < config.minEthBalance) {
-        await sleep(200);
+        await sleep(500); // Wait longer between balance checks
         continue;
       }
 
@@ -225,13 +225,13 @@ async function runWhaleHunter(fromBlock, toBlock, logger) {
       const contractAddress = await isContract(wallet);
       if (contractAddress) {
         logger.info(`   ⛔ Skipped smart contract (has bytecode): ${wallet}`);
-        await sleep(200);
+        await sleep(500);
         continue;
       }
 
       logger.info(`   🐋 WHALE: ${wallet} | ${balance.toFixed(4)} ETH`);
       whaleWallets.push({ address: wallet, ethBalance: balance, sourceContract: contract });
-      await sleep(200);
+      await sleep(500);
     }
   }
 
