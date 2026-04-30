@@ -129,8 +129,15 @@ async function tick() {
 }
 
 async function main() {
-  await tick(); // Run immediately on start
-  setInterval(tick, config.pollIntervalMs);
+  while (true) {
+    try {
+      await tick();
+    } catch (err) {
+      logger.error(`Fatal loop error: ${err.message}`);
+    }
+    // Wait for the next poll interval before starting the next tick
+    await new Promise(r => setTimeout(r, config.pollIntervalMs));
+  }
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }

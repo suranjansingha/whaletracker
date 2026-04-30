@@ -99,7 +99,20 @@ async function fetchLogsInfura(contractAddress, fromBlock, toBlock) {
 
 // ─── Get current block ───────────────────────────────────────────────────────
 async function getLatestBlock() {
-  // Try Etherscan first
+  // Use Public RPC by default to save Etherscan rate limits for log fetching
+  try {
+    const { data } = await axios.post(config.publicRpc, {
+      jsonrpc: '2.0', id: 1, method: 'eth_blockNumber', params: [],
+    }, { timeout: 8000 });
+    
+    if (data?.result) {
+      const block = parseInt(data.result, 16);
+      if (!isNaN(block)) return block;
+    }
+  } catch (err) {
+    // Fallback to Etherscan if public RPC is down
+  }
+
   if (config.ethApiKey) {
     try {
       const { data } = await axios.get(config.etherscanBase, {
@@ -107,14 +120,14 @@ async function getLatestBlock() {
         timeout: 8000,
       });
       const raw = data.result;
-      if (raw && raw !== '0x') return parseInt(raw, 16);
-    } catch { /* fall through */ }
+      if (raw && raw !== '0x') {
+        const block = parseInt(raw, 16);
+        if (!isNaN(block)) return block;
+      }
+    } catch { /* final resort */ }
   }
-  // Fallback: public Cloudflare RPC (free, no key)
-  const { data } = await axios.post(config.publicRpc, {
-    jsonrpc: '2.0', id: 1, method: 'eth_blockNumber', params: [],
-  }, { timeout: 8000 });
-  return parseInt(data.result, 16);
+
+  throw new Error('Could not fetch latest block from any provider');
 }
 
 // ─── Get ETH balances for multiple wallets (Batch) ──────────────────────────
