@@ -117,10 +117,36 @@ async function getLatestBlock() {
   return parseInt(data.result, 16);
 }
 
-// ─── Get ETH balance for a wallet ────────────────────────────────────────────
+// ─── Get ETH balances for multiple wallets (Batch) ──────────────────────────
+// Etherscan balancemulti allows up to 20 addresses per call
+async function getEthBalancesBatch(addresses) {
+  if (addresses.length === 0) return [];
+  try {
+    const { data } = await axios.get(config.etherscanBase, {
+      params: {
+        chainid: 1,
+        module: 'account',
+        action: 'balancemulti',
+        address: addresses.join(','),
+        tag: 'latest',
+        apikey: config.ethApiKey
+      },
+      timeout: 10000
+    });
+
+    if (data.status !== '1') return addresses.map(() => 0);
+    return data.result.map(item => ({
+      address: item.account,
+      balance: parseFloat(ethers.formatEther(BigInt(item.balance)))
+    }));
+  } catch (err) {
+    return addresses.map(() => ({ address: null, balance: 0 }));
+  }
+}
+
+// ─── Get ETH balance for a single wallet (Legacy/Fallback) ───────────────────
 async function getEthBalance(address) {
   try {
-    // Try Infura or public RPC first (faster)
     const rpc = config.infuraRpc || config.publicRpc;
     const { data } = await axios.post(rpc, {
       jsonrpc: '2.0', id: 1, method: 'eth_getBalance',
@@ -128,14 +154,7 @@ async function getEthBalance(address) {
     }, { timeout: 8000 });
     return parseFloat(ethers.formatEther(BigInt(data.result)));
   } catch {
-    // Fallback: Etherscan
-    try {
-      const { data } = await axios.get(config.etherscanBase, {
-        params: { chainid: 1, module: 'account', action: 'balance', address, tag: 'latest', apikey: config.ethApiKey },
-        timeout: 8000,
-      });
-      return parseFloat(ethers.formatEther(BigInt(data.result)));
-    } catch { return 0; }
+    return 0;
   }
 }
 
@@ -206,32 +225,37 @@ async function runWhaleHunter(fromBlock, toBlock, logger) {
     const wallets = extractWallets(logs);
     logger.info(`   ↳ Unique wallets: ${wallets.length}`);
 
-    // Filter by balance and contract status
-    for (const wallet of wallets) {
-      // Layer 1: static blocklist (instant, no API call)
-      if (KNOWN_CONTRACTS.has(wallet)) {
-        logger.info(`   ⛔ Skipped known contract: ${wallet}`);
-        await sleep(50);
-        continue;
-      }
+    // Task 2: Filter by balance (Batch mode - 20x faster)
+    const BATCH_SIZE = 20;
+    const filteredWallets = [];
 
-      const balance = await getEthBalance(wallet);
-      if (balance < config.minEthBalance) {
-        await sleep(500); // Wait longer between balance checks
-        continue;
-      }
+    // Skip known contracts first
+    const cleanWallets = wallets.filter(w => !KNOWN_CONTRACTS.has(w));
+    
+    for (let i = 0; i < cleanWallets.length; i += BATCH_SIZE) {
+      const batch = cleanWallets.slice(i, i + BATCH_SIZE);
+      logger.info(`   ⏳ Checking balances for batch ${Math.floor(i/BATCH_SIZE)+1}/${Math.ceil(cleanWallets.length/BATCH_SIZE)}...`);
+      
+      const balances = await getEthBalancesBatch(batch);
+      await sleep(1000); // 1s pause between batches to respect 5 calls/sec limit
 
-      // Layer 2: live contract check via eth_getCode
-      const contractAddress = await isContract(wallet);
-      if (contractAddress) {
-        logger.info(`   ⛔ Skipped smart contract (has bytecode): ${wallet}`);
-        await sleep(500);
-        continue;
+      for (const item of balances) {
+        if (item.balance >= config.minEthBalance) {
+          // Double check if it's a contract
+          const contractAddress = await isContract(item.address);
+          if (contractAddress) {
+            logger.info(`   ⛔ Skipped smart contract: ${item.address}`);
+          } else {
+            logger.info(`   🐋 WHALE FOUND: ${item.address} | ${item.balance.toFixed(4)} ETH`);
+            whaleWallets.push({
+              address: item.address,
+              ethBalance: item.balance,
+              sourceContract: contract
+            });
+          }
+          await sleep(500); // Small pause for contract check
+        }
       }
-
-      logger.info(`   🐋 WHALE: ${wallet} | ${balance.toFixed(4)} ETH`);
-      whaleWallets.push({ address: wallet, ethBalance: balance, sourceContract: contract });
-      await sleep(500);
     }
   }
 
