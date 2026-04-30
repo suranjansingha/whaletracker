@@ -107,45 +107,45 @@ async function getLatestBlock() {
   }
 
   // Etherscan V2 proxy for block number
-  const { data } = await axios.get(config.etherscanBase, {
-    params: {
-      chainid: 1,
-      module: 'proxy',
-      action: 'eth_blockNumber',
-      apikey: config.ethApiKey,
-    },
-    timeout: 8000,
-  });
-  const raw = data.result;
-  if (!raw || raw === '0x') throw new Error('Could not fetch latest block from Etherscan');
-  return parseInt(raw, 16);
+// ─── Get current block ───────────────────────────────────────────────────────
+async function getLatestBlock() {
+  // Try Etherscan first
+  if (config.ethApiKey) {
+    try {
+      const { data } = await axios.get(config.etherscanBase, {
+        params: { chainid: 1, module: 'proxy', action: 'eth_blockNumber', apikey: config.ethApiKey },
+        timeout: 8000,
+      });
+      const raw = data.result;
+      if (raw && raw !== '0x') return parseInt(raw, 16);
+    } catch { /* fall through */ }
+  }
+  // Fallback: public Cloudflare RPC (free, no key)
+  const { data } = await axios.post(config.publicRpc, {
+    jsonrpc: '2.0', id: 1, method: 'eth_blockNumber', params: [],
+  }, { timeout: 8000 });
+  return parseInt(data.result, 16);
 }
 
 // ─── Get ETH balance for a wallet ────────────────────────────────────────────
 async function getEthBalance(address) {
   try {
-    if (config.infuraRpc) {
-      const { data } = await axios.post(config.infuraRpc, {
-        jsonrpc: '2.0', id: 1, method: 'eth_getBalance',
-        params: [address, 'latest'],
-      }, { timeout: 8000 });
-      return parseFloat(ethers.formatEther(BigInt(data.result)));
-    }
-
-    const { data } = await axios.get(config.etherscanBase, {
-      params: {
-        chainid: 1,
-        module: 'account',
-        action: 'balance',
-        address,
-        tag: 'latest',
-        apikey: config.ethApiKey,
-      },
-      timeout: 8000,
-    });
+    // Try Infura or public RPC first (faster)
+    const rpc = config.infuraRpc || config.publicRpc;
+    const { data } = await axios.post(rpc, {
+      jsonrpc: '2.0', id: 1, method: 'eth_getBalance',
+      params: [address, 'latest'],
+    }, { timeout: 8000 });
     return parseFloat(ethers.formatEther(BigInt(data.result)));
   } catch {
-    return 0;
+    // Fallback: Etherscan
+    try {
+      const { data } = await axios.get(config.etherscanBase, {
+        params: { chainid: 1, module: 'account', action: 'balance', address, tag: 'latest', apikey: config.ethApiKey },
+        timeout: 8000,
+      });
+      return parseFloat(ethers.formatEther(BigInt(data.result)));
+    } catch { return 0; }
   }
 }
 
