@@ -191,6 +191,9 @@ async function runWhaleHunter(fromBlock, toBlock, logger) {
     let logs = [];
     let source = 'Etherscan';
 
+    // Sleep to prevent Etherscan free-tier rate limits (Max 5 calls/sec)
+    await new Promise(res => setTimeout(res, 250));
+
     try {
       if (!config.ethApiKey) throw new Error('No ETH_API_KEY — switching to Infura RPC');
       logs = await fetchLogsEtherscan(contract, fromBlock, toBlock);
