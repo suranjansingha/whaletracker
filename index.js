@@ -115,10 +115,10 @@ async function tick() {
           await axios.post(config.clayWebhookUrl, {
             address: whale.address,
             ethBalance: whale.ethBalance,
-            twitterHandle: identity?.twitterHandle || '',
-            instagramHandle: identity?.instagramHandle || '',
-            openSeaUsername: identity?.openSeaUsername || '',
-            farcasterHandle: identity?.farcasterHandle || '',
+            twitterUrl: identity?.twitterHandle ? `https://twitter.com/${identity.twitterHandle}` : '',
+            instagramUrl: identity?.instagramHandle ? `https://instagram.com/${identity.instagramHandle}` : '',
+            openSeaUrl: identity?.openSeaUsername ? `https://opensea.io/${identity.openSeaUsername}` : '',
+            farcasterUrl: identity?.farcasterHandle ? `https://warpcast.com/${identity.farcasterHandle}` : '',
           }, { timeout: 8000 });
           logger.info(`   ✨ Pushed ${whale.address} to Clay Webhook`);
         } catch (err) {
