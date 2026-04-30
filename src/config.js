@@ -10,7 +10,6 @@ const config = {
   debankApiKey:   process.env.DEBANK_API_KEY   || null,
   neynarApiKey:   process.env.NEYNAR_API_KEY   || null,
   openSeaApiKey:  process.env.OPENSEA_API_KEY  || null,
-  apolloApiKey:   process.env.APOLLO_API_KEY   || null,
   googleSheetId:  process.env.GOOGLE_SHEET_ID  || null,
 
   // Tracker settings

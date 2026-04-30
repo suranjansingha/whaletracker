@@ -65,20 +65,7 @@ async function check() {
     console.log(`${ok ? '✅' : '❌'} OpenSea:      ${ok ? 'connected' : 'FAILED — ' + e.message}`);
   }
 
-  // 5. Apollo API
-  try {
-    if (!process.env.APOLLO_API_KEY) throw new Error('APOLLO_API_KEY not set');
-    await axios.post('https://api.apollo.io/v1/people/match', { twitter_url: 'https://twitter.com/vitalikbuterin' }, {
-      headers: { 'Content-Type': 'application/json', 'X-Api-Key': process.env.APOLLO_API_KEY },
-      timeout: 5000,
-    });
-    console.log(`✅ Apollo:       connected`);
-  } catch (e) {
-    const ok = e.response?.status === 404;
-    console.log(`${ok ? '✅' : '⚠️ '} Apollo:       ${ok ? 'connected' : 'FAILED/NOT SET — ' + e.message}`);
-  }
-
-  // 7. Google Sheets
+  // 5. Google Sheets
   console.log(`${SHEET_ID ? '✅' : '❌'} Google Sheet: ${SHEET_ID ? 'ID configured → https://docs.google.com/spreadsheets/d/' + SHEET_ID : 'GOOGLE_SHEET_ID not set'}`);
 
   // 6. Env summary

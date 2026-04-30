@@ -13,7 +13,6 @@
 const { config, validate } = require('./src/config');
 const { runWhaleHunter, getLatestBlock } = require('./src/whaleHunter');
 const { resolveIdentity } = require('./src/identityResolver');
-const { enrichLead } = require('./src/enrichment');
 const { archiveLead, getArchiveStats, LEADS_PATH } = require('./src/archive');
 const { upsertLead } = require('./src/sheetsSync');
 const { logger } = require('./src/logger');
@@ -72,12 +71,8 @@ async function tick() {
       const identity = await resolveIdentity(whale.address, logger);
       await sleep(300); // polite rate-limiting
 
-      // Enrichment waterfall
-      const enrichment = await enrichLead(identity, logger);
-      await sleep(300);
-
       // Archive to JSON
-      const lead  = { ...whale, identity, enrichment };
+      const lead  = { ...whale, identity };
       const isNew = archiveLead(lead);
       logger.success(`  📁 Lead ${isNew ? 'added' : 'updated'} in archive`);
 
@@ -98,12 +93,12 @@ async function tick() {
         bio:              identity?.bio,
         avatar:           identity?.avatar,
         identitySource:   identity?.source,
-        fullName:         enrichment?.fullName,
-        emailAddress:     enrichment?.emailAddress,
-        whatsappNumber:   enrichment?.whatsappNumber,
-        telegramHandle:   enrichment?.telegramHandle,
-        linkedinUrl:      enrichment?.linkedinUrl,
-        enrichmentSource: enrichment?.source,
+        fullName:         null,
+        emailAddress:     null,
+        whatsappNumber:   null,
+        telegramHandle:   null,
+        linkedinUrl:      null,
+        enrichmentSource: null,
         tags:             lead.tags,
         firstSeen:        lead.firstSeen,
         lastUpdated:      lead.lastUpdated,
