@@ -13,6 +13,8 @@
 const { config, validate } = require('./src/config');
 const { runWhaleHunter, getLatestBlock } = require('./src/whaleHunter');
 const { resolveIdentity } = require('./src/identityResolver');
+const { scrapeBiosForTelegram } = require('./src/bioScraper');
+const { sendTelegramAlert } = require('./src/telegramAlert');
 const { archiveLead, getArchiveStats, LEADS_PATH } = require('./src/archive');
 const { upsertLead } = require('./src/sheetsSync');
 const { logger } = require('./src/logger');
@@ -71,6 +73,12 @@ async function tick() {
       const identity = await resolveIdentity(whale.address, logger);
       await sleep(300); // polite rate-limiting
 
+      // Scrape for Telegram
+      const telegramHandle = await scrapeBiosForTelegram(identity);
+      if (telegramHandle) {
+        logger.info(`   ✈️  Extracted Telegram from bio: @${telegramHandle}`);
+      }
+
       // Archive to JSON
       const lead  = { ...whale, identity };
       const isNew = archiveLead(lead);
@@ -92,17 +100,19 @@ async function tick() {
         website:          identity?.website,
         bio:              identity?.bio,
         avatar:           identity?.avatar,
-        identitySource:   identity?.source,
         fullName:         null,
         emailAddress:     null,
         whatsappNumber:   null,
-        telegramHandle:   null,
+        telegramHandle:   telegramHandle,
         linkedinUrl:      null,
-        enrichmentSource: null,
+        enrichmentSource: telegramHandle ? 'Bio Scraper' : null,
         tags:             lead.tags,
-        firstSeen:        lead.firstSeen,
-        lastUpdated:      lead.lastUpdated,
       }, logger);
+
+      // Send Telegram Alert
+      if (config.telegramBotToken && config.telegramChatId) {
+        await sendTelegramAlert(config.telegramBotToken, config.telegramChatId, whale, identity, telegramHandle);
+      }
     }
 
     // Stats

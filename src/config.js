@@ -12,6 +12,10 @@ const config = {
   openSeaApiKey:  process.env.OPENSEA_API_KEY  || null,
   googleSheetId:  process.env.GOOGLE_SHEET_ID  || null,
 
+  // Telegram Alerts
+  telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || null,
+  telegramChatId:   process.env.TELEGRAM_CHAT_ID   || null,
+
   // Tracker settings
   minEthBalance: parseFloat(process.env.MIN_ETH_BALANCE || '20'),
   pollIntervalMs: parseInt(process.env.POLL_INTERVAL_MS || '30000', 10),
