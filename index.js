@@ -108,6 +108,23 @@ async function tick() {
         firstSeen:        lead.firstSeen,
         lastUpdated:      lead.lastUpdated,
       }, logger);
+
+      // Push to Clay Webhook (if set)
+      if (config.clayWebhookUrl) {
+        try {
+          await axios.post(config.clayWebhookUrl, {
+            address: whale.address,
+            ethBalance: whale.ethBalance,
+            twitterHandle: identity?.twitterHandle || '',
+            instagramHandle: identity?.instagramHandle || '',
+            openSeaUsername: identity?.openSeaUsername || '',
+            farcasterHandle: identity?.farcasterHandle || '',
+          }, { timeout: 8000 });
+          logger.info(`   ✨ Pushed ${whale.address} to Clay Webhook`);
+        } catch (err) {
+          logger.warn(`   ⚠️  Failed to push to Clay Webhook: ${err.message}`);
+        }
+      }
     }
 
     // Stats
