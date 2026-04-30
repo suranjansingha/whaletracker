@@ -14,38 +14,7 @@
 const axios = require('axios');
 const { config } = require('./config');
 
-// ─── Clay People API ──────────────────────────────────────────────────────────
-// Docs: https://docs.clay.com/
-async function enrichViaClay(twitterHandle) {
-  if (!config.clayApiKey || !twitterHandle) return null;
 
-  try {
-    const { data } = await axios.post(
-      'https://api.clay.com/v1/people/search',
-      { twitter_handle: twitterHandle },
-      {
-        headers: { Authorization: `Bearer ${config.clayApiKey}` },
-        timeout: 12000,
-      }
-    );
-
-    const person = data?.data?.[0];
-    if (!person) return null;
-
-    return {
-      source: 'Clay',
-      fullName:       person.name || null,
-      emailAddress:   person.email || person.work_email || null,
-      whatsappNumber: person.phone || person.whatsapp || null,
-      telegramHandle: person.telegram || null,
-      farcasterFid:   person.farcaster_fid || null,
-      linkedinUrl:    person.linkedin_url || null,
-      enrichedAt:     new Date().toISOString(),
-    };
-  } catch (err) {
-    throw new Error(`Clay error: ${err.response?.data?.message || err.message}`);
-  }
-}
 
 // ─── Apollo.io API ────────────────────────────────────────────────────────────
 // Docs: https://apolloio.github.io/apollo-api-docs/
@@ -87,17 +56,6 @@ async function enrichViaApollo(twitterHandle) {
 // ─── Main enrichment waterfall ────────────────────────────────────────────────
 async function enrichLead(identity, logger) {
   const handle = identity?.twitterHandle;
-
-  // Try Clay first
-  try {
-    const result = await enrichViaClay(handle);
-    if (result) {
-      logger.info(`   ✨ Enriched via Clay: Telegram=${result.telegramHandle || '—'}`);
-      return result;
-    }
-  } catch (err) {
-    logger.warn(`   ⚡ Clay failed (${err.message})`);
-  }
 
   // Try Apollo
   try {

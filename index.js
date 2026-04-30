@@ -108,23 +108,6 @@ async function tick() {
         firstSeen:        lead.firstSeen,
         lastUpdated:      lead.lastUpdated,
       }, logger);
-
-      // Push to Clay Webhook (if set)
-      if (config.clayWebhookUrl) {
-        try {
-          await axios.post(config.clayWebhookUrl, {
-            address: whale.address,
-            ethBalance: whale.ethBalance,
-            twitterUrl: identity?.twitterHandle ? `https://twitter.com/${identity.twitterHandle}` : '',
-            instagramUrl: identity?.instagramHandle ? `https://instagram.com/${identity.instagramHandle}` : '',
-            openSeaUrl: identity?.openSeaUsername ? `https://opensea.io/${identity.openSeaUsername}` : '',
-            farcasterUrl: identity?.farcasterHandle ? `https://warpcast.com/${identity.farcasterHandle}` : '',
-          }, { timeout: 8000 });
-          logger.info(`   ✨ Pushed ${whale.address} to Clay Webhook`);
-        } catch (err) {
-          logger.warn(`   ⚠️  Failed to push to Clay Webhook: ${err.message}`);
-        }
-      }
     }
 
     // Stats

@@ -10,8 +10,6 @@ const config = {
   debankApiKey:   process.env.DEBANK_API_KEY   || null,
   neynarApiKey:   process.env.NEYNAR_API_KEY   || null,
   openSeaApiKey:  process.env.OPENSEA_API_KEY  || null,
-  clayApiKey:     process.env.CLAY_API_KEY     || null,
-  clayWebhookUrl: process.env.CLAY_WEBHOOK_URL || null,
   apolloApiKey:   process.env.APOLLO_API_KEY   || null,
   googleSheetId:  process.env.GOOGLE_SHEET_ID  || null,
 

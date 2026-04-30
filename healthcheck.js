@@ -65,20 +65,7 @@ async function check() {
     console.log(`${ok ? '✅' : '❌'} OpenSea:      ${ok ? 'connected' : 'FAILED — ' + e.message}`);
   }
 
-  // 5. Clay API
-  try {
-    if (!process.env.CLAY_API_KEY) throw new Error('CLAY_API_KEY not set');
-    await axios.post('https://api.clay.com/v1/people/search', { twitter_handle: 'vitalikbuterin' }, {
-      headers: { Authorization: `Bearer ${process.env.CLAY_API_KEY}` },
-      timeout: 5000,
-    });
-    console.log(`✅ Clay:         connected`);
-  } catch (e) {
-    const ok = e.response?.status === 404; // 404 means key is valid but profile not found
-    console.log(`${ok ? '✅' : '⚠️ '} Clay:         ${ok ? 'connected' : 'FAILED/NOT SET — ' + e.message}`);
-  }
-
-  // 6. Apollo API
+  // 5. Apollo API
   try {
     if (!process.env.APOLLO_API_KEY) throw new Error('APOLLO_API_KEY not set');
     await axios.post('https://api.apollo.io/v1/people/match', { twitter_url: 'https://twitter.com/vitalikbuterin' }, {
