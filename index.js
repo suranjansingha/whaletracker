@@ -99,6 +99,8 @@ async function tick() {
         avatar:           identity?.avatar,
         identitySource:   identity?.source,
         fullName:         enrichment?.fullName,
+        emailAddress:     enrichment?.emailAddress,
+        whatsappNumber:   enrichment?.whatsappNumber,
         telegramHandle:   enrichment?.telegramHandle,
         linkedinUrl:      enrichment?.linkedinUrl,
         enrichmentSource: enrichment?.source,

@@ -35,6 +35,8 @@ async function enrichViaClay(twitterHandle) {
     return {
       source: 'Clay',
       fullName:       person.name || null,
+      emailAddress:   person.email || person.work_email || null,
+      whatsappNumber: person.phone || person.whatsapp || null,
       telegramHandle: person.telegram || null,
       farcasterFid:   person.farcaster_fid || null,
       linkedinUrl:    person.linkedin_url || null,
@@ -70,6 +72,8 @@ async function enrichViaApollo(twitterHandle) {
     return {
       source: 'Apollo',
       fullName:       person.name || null,
+      emailAddress:   person.email || person.personal_emails?.[0] || null,
+      whatsappNumber: null, // Apollo rarely exposes personal WhatsApp
       telegramHandle: null, // Apollo doesn't surface Telegram
       farcasterFid:   null,
       linkedinUrl:    person.linkedin_url || null,
@@ -111,6 +115,8 @@ async function enrichLead(identity, logger) {
   return {
     source: 'enrichment_unavailable',
     fullName: null,
+    emailAddress: null,
+    whatsappNumber: null,
     telegramHandle: null,
     farcasterFid: null,
     linkedinUrl: null,
