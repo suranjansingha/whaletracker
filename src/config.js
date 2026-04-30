@@ -31,7 +31,7 @@ const config = {
   etherscanBase: 'https://api.etherscan.io/v2/api',
   debankBase: 'https://pro-openapi.debank.com/v1',
   // Free public RPC — guaranteed fallback even without Infura
-  publicRpc: 'https://cloudflare-eth.com',
+  publicRpc: 'https://eth-mainnet.public.blastapi.io',
 };
 
 function validate() {
