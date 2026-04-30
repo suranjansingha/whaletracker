@@ -1,0 +1,24 @@
+{
+  "name": "whale-tracker",
+  "version": "1.0.0",
+  "description": "Stratefai Whale Lead Engine — Phase 1",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.15.2",
+    "chalk": "^5.6.2",
+    "cli-table3": "^0.6.5",
+    "dotenv": "^17.4.2",
+    "ethers": "^6.16.0",
+    "googleapis": "^171.4.0",
+    "ora": "^9.4.0"
+  }
+}
